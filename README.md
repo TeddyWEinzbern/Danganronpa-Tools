@@ -6,12 +6,6 @@ It *should* do its job, though.
 
 ## Scripts
 
-#### Danganronpa 1, 2, Another Episode
-
-Can be found in the `dr12ae` directory.
-
---------------------------------------------------------------------------------
-
 #### New Danganronpa V3
 
 Can be found in the `drv3` directory.
