@@ -12,9 +12,11 @@ import os
 
 from util import *
 from drv3_dec import *
+from logutil import get_logger
 
-SPC_MAGIC   = "CPS."
-TABLE_MAGIC = "Root"
+SPC_MAGIC   = b"CPS."
+TABLE_MAGIC = b"Root"
+logger = get_logger(__name__)
 
 def spc_ex(filename, out_dir = None):
   out_dir = out_dir or os.path.splitext(filename)[0]
@@ -24,14 +26,11 @@ def spc_ex(filename, out_dir = None):
 
 def spc_ex_data(f, filename, out_dir):
   
-  try:
-    os.makedirs(out_dir)
-  except:
-    pass
+  os.makedirs(out_dir, exist_ok = True)
   
   magic = f.read(4)
   
-  if magic == "$CMP":
+  if magic == b"$CMP":
     dec = srd_dec_data(f)
     f.close()
     f = BinaryString(dec)
@@ -39,7 +38,7 @@ def spc_ex_data(f, filename, out_dir):
   
   if not magic == SPC_MAGIC:
     f.close()
-    print "Invalid SPC file."
+    logger.error("Invalid SPC file: %s", filename)
     return
   
   unk1 = f.read(0x24)
@@ -52,7 +51,7 @@ def spc_ex_data(f, filename, out_dir):
   
   if not table_magic == TABLE_MAGIC:
     f.close()
-    print "Invalid SPC file."
+    logger.error("Invalid SPC file table: %s", filename)
     return
   
   for i in range(file_count):
@@ -69,7 +68,7 @@ def spc_ex_data(f, filename, out_dir):
     data_padding = (0x10 - cmp_size % 0x10) % 0x10
     
     # We don't actually want the null byte though, so pretend it's padding.
-    fn = f.read(name_len - 1)
+    fn = f.read(name_len - 1).decode("CP932", errors = "replace")
     f.read(name_padding + 1)
     
     # print
@@ -88,7 +87,7 @@ def spc_ex_data(f, filename, out_dir):
       data = spc_dec(data)
       
       if not len(data) == dec_size:
-        print "Size mismatch:", dec_size, len(data)
+        logger.error("Size mismatch in %s: expected=%d actual=%d", filename, dec_size, len(data))
     
     # Load from an external file.
     elif cmp_flag == 0x03:
@@ -127,7 +126,7 @@ if __name__ == "__main__":
       
       out_dir = os.path.join("dec", fn)
       
-      print fn
+      logger.info(fn)
       spc_ex(fn, out_dir)
 
 ### EOF ###

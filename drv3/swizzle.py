@@ -57,7 +57,7 @@ def PostProcessMortonUnswizzle(data, width, height, bytespp):
         | (DecodeMorton2Y(i) & (min - 1)) << k \
         | (DecodeMorton2X(i) & (min - 1)) << 0
       
-      x = j / height
+      x = j // height
       y = j % height
     
     else:
@@ -66,7 +66,7 @@ def PostProcessMortonUnswizzle(data, width, height, bytespp):
         | (DecodeMorton2Y(i) & (min - 1)) << 0
       
       x = j % width
-      y = j / width
+      y = j // width
     
     p = ((y * width) + x) * bytespp
     unswizzled[p : p + bytespp] = data[i * bytespp : (i + 1) * bytespp]

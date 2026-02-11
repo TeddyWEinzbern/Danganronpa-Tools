@@ -2,7 +2,7 @@ A set of scripts for working with the data in Danganronpa V3 for the PS Vita and
 
 ## Dependencies
 
-* Python 2.7 (x86)
+* Python 3.12+
     * <http://www.python.org/download/>
 * Pillow (for srd texture extraction)
     * <https://python-pillow.org/>
@@ -16,7 +16,8 @@ An all-in-one extractor for a bunch of the data in Danganronpa V3.
 #### Usage
 
 ```
-usage: drv3_ex_all.py [-h] [-o <output dir>] [--no-crop]
+usage: drv3_ex_all.py [-h] [-o <output dir>] [--log-file <log file>]
+                      [--verbose] [--no-crop]
                       <input dir> [<input dir> ...]
 
 positional arguments:
@@ -26,8 +27,14 @@ optional arguments:
   -h, --help            show this help message and exit
   -o <output dir>, --output <output dir>
                         The output directory.
+  --log-file <log file>
+                        Override log file path.
+  --verbose             Show INFO logs in the console.
   --no-crop             Don't crop srd textures to their display dimensions.
 ```
+
+By default, logs are written to `<output dir>/drv3_ex_all.log` and only errors
+are shown in the console.
 
 You can drag/drop directories onto the `drv3_ex_all.py` file to process them.
 If no output directory is provided (such as in a drag/drop), a "dec" directory

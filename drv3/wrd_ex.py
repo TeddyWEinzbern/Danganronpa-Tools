@@ -9,6 +9,9 @@
 ################################################################################
 
 from util import *
+from logutil import get_logger
+
+logger = get_logger(__name__)
 
 def wrd_ex(filename, out_file = None):
   out_file = out_file or os.path.splitext(filename)[0] + ".txt"
@@ -22,16 +25,14 @@ def wrd_ex(filename, out_file = None):
   
   out_dir = os.path.dirname(out_file)
   
-  try:
-    os.makedirs(out_dir)
-  except:
-    pass
+  if out_dir:
+    os.makedirs(out_dir, exist_ok = True)
   
-  with open(out_file, "wb") as f:
+  with open(out_file, "w", encoding = "UTF-8", newline = "\n") as f:
     if strs:
       # f.write("########## Strings ##########\n\n")
       for i, string in enumerate(strs):
-        f.write(string.encode("UTF-8"))
+        f.write(string)
         f.write("\n\n")
     
     # if cmds:
@@ -75,7 +76,7 @@ def wrd_ex_data(f):
     f.seek(off)
     for i in range(count):
       str_len = f.get_u8()
-      cmd = f.read(str_len).decode("UTF-8")
+      cmd = f.read(str_len).decode("UTF-8", errors = "replace")
       f.read(1) # Null byte
       cmds.append(cmd)
   
@@ -171,12 +172,10 @@ if __name__ == "__main__":
       out_dir  = dirname + "-ex" + out_dir[len(dirname):]
       out_file = os.path.join(out_dir, os.path.splitext(basename)[0] + ".txt")
       
-      try:
-        os.makedirs(out_dir)
-      except:
-        pass
+      if out_dir:
+        os.makedirs(out_dir, exist_ok = True)
       
-      print fn
+      logger.info(fn)
       wrd_ex(fn, out_file)
 
 ### EOF ###

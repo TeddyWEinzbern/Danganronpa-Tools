@@ -11,7 +11,7 @@
 import os
 from util import BinaryFile
 
-AWB_MAGIC = "AFS2"
+AWB_MAGIC = b"AFS2"
 
 ################################################################################
 
@@ -29,7 +29,7 @@ def awb_ex(filename, out_dir = None):
   for id, file_data in awb_ex_data(f):
     out_file = "%06d%s" % (id, guess_ext(file_data))
     out_file = os.path.join(out_dir, out_file)
-    print out_file
+    print(out_file)
     with open(out_file, "wb") as out:
       out.write(file_data)
   
@@ -40,7 +40,7 @@ def awb_ex(filename, out_dir = None):
 def awb_ex_data(data):
   
   if not data.read(4) == AWB_MAGIC:
-    print "Invalid AWB file."
+    print("Invalid AWB file.")
     return
   
   unk1        = data.read(4)
@@ -77,13 +77,13 @@ def awb_ex_data(data):
 ################################################################################
 
 def guess_ext(data):
-  if data[:4] == "RIFF":
+  if data[:4] == b"RIFF":
     return ".at9"
-  elif data[:4] == "VAGp":
+  elif data[:4] == b"VAGp":
     return ".vag"
-  elif data[:4] == "HCA\0":
+  elif data[:4] == b"HCA\0":
     return ".hca"
-  elif data[:2] == "\x80\x00":
+  elif data[:2] == b"\x80\x00":
     return ".adx"
   else:
     return ".dat"

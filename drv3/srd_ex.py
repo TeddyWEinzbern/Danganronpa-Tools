@@ -13,8 +13,11 @@ import math
 
 from util import *
 from swizzle import PostProcessMortonUnswizzle
+from logutil import get_logger
 
 from PIL import Image
+
+logger = get_logger(__name__)
 
 def read_srd_item(f):
   
@@ -23,7 +26,7 @@ def read_srd_item(f):
   if len(data_type) < 4:
     return None, None, None
   
-  if not data_type.startswith("$"):
+  if not data_type.startswith(b"$"):
     return None, None, None
   
   data_len    = f.get_u32be()
@@ -50,7 +53,7 @@ def read_rsf(data, subdata):
   unk2 = data.read(4) # FB DB 32 01 ???
   unk3 = data.read(4) # 41 DC 32 01 ???
   unk4 = data.read(4) # 00 00 00 00 ???
-  name = data.get_str()
+  name = data.get_str(encoding = "CP932", errors = "replace")
   return name
 
 ################################################################################
@@ -97,9 +100,10 @@ def read_txr(data, subdata, filename, crop = False, keep_mipmaps = False):
     pal_start, pal_len, _, _ = mipmaps.pop(palette_id)
   
   img_data.seek(name_offset)
-  name = img_data.get_str(encoding = "CP932")
+  name = img_data.get_str(encoding = "CP932", errors = "replace")
   
-  print "%4d %4d %2d 0x%02X 0x%02X %3d %3d %3d" % (swiz, scanline, mipmap_count, fmt, unk2, palette, palette_id, unk5), name.encode("UTF-8")
+  logger.info("%4d %4d %2d 0x%02X 0x%02X %3d %3d %3d %s",
+              swiz, scanline, mipmap_count, fmt, unk2, palette, palette_id, unk5, name)
   # print "0x%02X %2d Mipmaps %3d %3d" % (fmt, mipmap_count, palette, palette_id), name.encode("UTF-8")
   
   filename_base = os.path.splitext(filename)[0]
@@ -127,7 +131,8 @@ def read_txr(data, subdata, filename, crop = False, keep_mipmaps = False):
       mipmap_start, mipmap_len, mipmap_unk1, mipmap_unk2 = mipmaps[i]
       f.seek(mipmap_start)
       img_data = bytearray(f.read(mipmap_len))
-      print "     %4d %4d 0x%08X 0x%08X" % (disp_width, disp_height, mipmap_start, mipmap_len)
+      logger.info("     %4d %4d 0x%08X 0x%08X",
+                  disp_width, disp_height, mipmap_start, mipmap_len)
       
       pal_data = None
       if not pal_start is None:
@@ -176,7 +181,7 @@ def read_txr(data, subdata, filename, crop = False, keep_mipmaps = False):
         for p in old_img_data:
           img_data.extend(pal_data[p * 4 : p * 4 + 4])
       
-      width = scanline / bytespp
+      width = scanline // bytespp
       height = disp_height
       
       if swizzled:
@@ -223,10 +228,10 @@ def read_txr(data, subdata, filename, crop = False, keep_mipmaps = False):
         height = disp_height
       
       if swizzled and width >= 4 and height >= 4:
-        img_data = PostProcessMortonUnswizzle(img_data, width / 4, height / 4, bytespp)
+        img_data = PostProcessMortonUnswizzle(img_data, width // 4, height // 4, bytespp)
     
     else:
-      print "!!!", hex(fmt), "!!!"
+      logger.error("Unknown texture format %s in %s", hex(fmt), filename)
       return []
     
     img = Image.frombytes(mode, (width, height), bytes(img_data), decoder, arg)
@@ -249,8 +254,8 @@ def read_txr(data, subdata, filename, crop = False, keep_mipmaps = False):
     
     images.append((mipmap_name, img))
     
-    disp_width = max(1, disp_width / 2)
-    disp_height = max(1, disp_height / 2)
+    disp_width = max(1, disp_width // 2)
+    disp_height = max(1, disp_height // 2)
   
   return images
 
@@ -277,22 +282,22 @@ def srd_ex_data(f, filename, out_dir, crop = False):
       break
     
     # Header
-    if data_type == "$CFH":
+    if data_type == b"$CFH":
       # Always first in a file, so just ignoring it.
       pass
     
     # End item?
-    elif data_type == "$CT0":
+    elif data_type == b"$CT0":
       # We don't seem to do any really complicated nesting, so ignoring this.
       pass
     
     # Resource (folder)?
-    elif data_type == "$RSF":
+    elif data_type == b"$RSF":
       subdir = read_rsf(data, subdata)
       subdir = os.path.join(out_dir, subdir)
     
     # Texture (srdv file)?
-    elif data_type == "$TXR":
+    elif data_type == b"$TXR":
       images = read_txr(data, subdata, filename, crop)
       
       for name, img in images:
@@ -302,15 +307,13 @@ def srd_ex_data(f, filename, out_dir, crop = False):
         # out_file = os.path.splitext(os.path.join(subdir, name))[0]
         out_file = os.path.join(subdir, name)
         
-        try:
-          os.makedirs(subdir)
-        except:
-          pass
+        if subdir:
+          os.makedirs(subdir, exist_ok = True)
         
         img.save(out_file)
     
     # Texture information?
-    elif data_type == "$TXI":
+    elif data_type == b"$TXI":
       pass
     
     # Resource information?
@@ -318,51 +321,51 @@ def srd_ex_data(f, filename, out_dir, crop = False):
     #   pass
     
     # Vertex?
-    elif data_type == "$VTX":
+    elif data_type == b"$VTX":
       pass
     
     # Scene?
-    elif data_type == "$SCN":
+    elif data_type == b"$SCN":
       pass
     
     # Mesh?
-    elif data_type == "$MSH":
+    elif data_type == b"$MSH":
       pass
     
     # ?
-    elif data_type == "$TRE":
+    elif data_type == b"$TRE":
       pass
     
     # Material?
-    elif data_type == "$MAT":
+    elif data_type == b"$MAT":
       pass
     
     # ?
-    elif data_type == "$COL":
+    elif data_type == b"$COL":
       pass
     
     # ?
-    elif data_type == "$OVT":
+    elif data_type == b"$OVT":
       pass
     
     # Volume tree
-    elif data_type == "$VTR":
+    elif data_type == b"$VTR":
       pass
     
     # Shader stuff?
-    elif data_type == "$VSD":
+    elif data_type == b"$VSD":
       pass
     
     # Shader stuff?
-    elif data_type == "$PSD":
+    elif data_type == b"$PSD":
       pass
     
     # ???
-    elif data_type == "$SKL":
+    elif data_type == b"$SKL":
       pass
     
     else:
-      print data_type
+      logger.info("Unhandled SRD data type: %r", data_type)
     
 if __name__ == "__main__":
   dirs = [
@@ -391,9 +394,7 @@ if __name__ == "__main__":
       out_dir = os.path.dirname(fn[len(dirname) + 1:])
       out_dir = os.path.join(dirname + "-ex", out_dir)
       
-      print
-      print fn
-      print
+      logger.info("Extracting %s", fn)
       srd_ex(fn, out_dir, crop = True)
 
 ### EOF ###

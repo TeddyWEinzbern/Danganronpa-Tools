@@ -80,7 +80,7 @@ def srd_dec_data(f):
   f.seek(0)
   magic = f.read(4)
   
-  if not magic == "$CMP":
+  if not magic == b"$CMP":
     f.seek(0)
     res = f.read()
     return res
@@ -95,7 +95,7 @@ def srd_dec_data(f):
   while True:
     cmp_mode = f.read(4)
     
-    if not cmp_mode.startswith("$CL") and not cmp_mode == "$CR0":
+    if not cmp_mode.startswith(b"$CL") and not cmp_mode == b"$CR0":
       break
     
     chunk_dec_size = f.get_u32be()
@@ -105,7 +105,7 @@ def srd_dec_data(f):
     chunk = f.read(chunk_cmp_size - 0x10)
     
     # CR0 = uncompressed
-    if not cmp_mode == "$CR0":
+    if not cmp_mode == b"$CR0":
       chunk = srd_dec_chunk(chunk, cmp_mode)
     
     res.extend(chunk)
@@ -123,11 +123,11 @@ def srd_dec_chunk(data, mode):
   flag = 1
   p = 0
   
-  if mode == "$CLN":
+  if mode == b"$CLN":
     shift = 8
-  elif mode == "$CL1":
+  elif mode == b"$CL1":
     shift = 7
-  elif mode == "$CL2":
+  elif mode == b"$CL2":
     shift = 6
   
   mask = (1 << shift) - 1

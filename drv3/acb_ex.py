@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # PC demo
     "partition_resident_win_demo",
     
-    PC retail
+    # PC retail
     "partition_resident_win",
   ]
   
@@ -57,7 +57,7 @@ if __name__ == "__main__":
       if not os.path.splitext(fn)[1].lower() == ".acb":
         continue
       
-      print fn
+      print(fn)
       names, awb_file = parse_acb(fn)
       
       basename = os.path.splitext(os.path.basename(fn))[0]
@@ -81,7 +81,7 @@ if __name__ == "__main__":
         name = names[id] + guess_ext(file_data)
         out_file = os.path.join(out_dir, name)
         
-        print out_file
+        print(out_file)
         with open(out_file, "wb") as f:
           f.write(file_data)
       

@@ -17,9 +17,9 @@ import struct
 ### CONSTANTS
 ############################################################
 
-CPK_MAGIC = "CPK "
-TOC_MAGIC = "TOC "
-UTF_MAGIC = "@UTF"
+CPK_MAGIC = b"CPK "
+TOC_MAGIC = b"TOC "
+UTF_MAGIC = b"@UTF"
 
 COLUMN_STORAGE_MASK     = 0xF0
 COLUMN_STORAGE_PERROW   = 0x50
@@ -49,7 +49,7 @@ def query_utf(data, table_offset, index, name):
   
   if not data.read(4) == UTF_MAGIC:
     data.seek(old_pos)
-    print "Not a @UTF table at %d" % table_offset
+    print("Not a @UTF table at %d" % table_offset)
     return
   
   table_size        = data.get_u32be()
@@ -91,7 +91,7 @@ def query_utf(data, table_offset, index, name):
         data.read(1)
       else:
         data.seek(old_pos)
-        print "Unknown type for constant."
+        print("Unknown type for constant.")
         return
     
     schema_info.append((schema_type, col_name, const_offset))
@@ -117,7 +117,7 @@ def query_utf(data, table_offset, index, name):
       const_offset = schema_info[j][2]
       
       str_table.seek(col_name)
-      col_name = str_table.get_str()
+      col_name = str_table.get_str(encoding = "UTF-8", errors = "replace")
       # print col_name
       
       if const_offset >= 0:
@@ -135,7 +135,7 @@ def query_utf(data, table_offset, index, name):
         if type_mask == COLUMN_TYPE_STRING:
           str_offset = data.get_u32be()
           str_table.seek(str_offset)
-          value = str_table.get_str()
+          value = str_table.get_str(encoding = "UTF-8", errors = "replace")
         
         elif type_mask == COLUMN_TYPE_DATA:
           vardata_offset = data.get_u32be()
@@ -172,7 +172,7 @@ def query_utf(data, table_offset, index, name):
           value = data.get_u8()
         else:
           data.seek(old_pos)
-          print "Unknown normal type."
+          print("Unknown normal type.")
           return
         
         if const_offset < 0:

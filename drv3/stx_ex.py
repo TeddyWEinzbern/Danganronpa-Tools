@@ -9,8 +9,10 @@
 ################################################################################
 
 from util import *
+from logutil import get_logger
 
-STX_MAGIC = "STXT"
+STX_MAGIC = b"STXT"
+logger = get_logger(__name__)
 
 def stx_ex(filename, out_file = None):
   out_file = out_file or os.path.splitext(filename)[0] + ".txt"
@@ -24,22 +26,20 @@ def stx_ex(filename, out_file = None):
   
   out_dir = os.path.dirname(out_file)
   
-  try:
-    os.makedirs(out_dir)
-  except:
-    pass
+  if out_dir:
+    os.makedirs(out_dir, exist_ok = True)
   
-  with open(out_file, "wb") as f:
+  with open(out_file, "w", encoding = "UTF-8", newline = "\n") as f:
     for str_id, string in strs:
       f.write("##### %04d\n\n" % str_id)
-      f.write(string.encode("UTF-8"))
+      f.write(string)
       f.write("\n\n")
 
 def stx_ex_data(f):
   if not f.read(4) == STX_MAGIC:
     return []
   
-  lang      = f.read(4)   # "JPLL" in the JP version, at least.
+  lang      = f.read(4)   # b"JPLL" in the JP version, at least.
   unk       = f.get_u32() # Table count?
   table_off = f.get_u32()
   
@@ -82,12 +82,10 @@ if __name__ == "__main__":
       out_dir  = dirname + "-ex" + out_dir[len(dirname):]
       out_file = os.path.join(out_dir, os.path.splitext(basename)[0] + ".txt")
       
-      try:
-        os.makedirs(out_dir)
-      except:
-        pass
+      if out_dir:
+        os.makedirs(out_dir, exist_ok = True)
       
-      print fn
+      logger.info(fn)
       stx_ex(fn, out_file)
 
 ### EOF ###

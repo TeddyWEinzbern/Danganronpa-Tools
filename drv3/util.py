@@ -10,7 +10,7 @@
 
 import os
 import zlib
-import StringIO
+import io
 import struct
 
 class BinaryHelper(object):
@@ -48,27 +48,43 @@ class BinaryHelper(object):
   def get_bin(self, length):
     return BinaryString(self.read(length))
   
-  def get_str(self, bytes_per_char = 1, encoding = None):
-    bytes = []
+  def get_str(self, bytes_per_char = 1, encoding = None, errors = "strict"):
+    chunks = []
     
     while True:
       ch = self.read(bytes_per_char)
-      if ch == "\x00" * bytes_per_char:
+      if len(ch) < bytes_per_char:
+        break
+      if ch == b"\x00" * bytes_per_char:
         break
       else:
-        bytes.append(ch)
+        chunks.append(ch)
     
-    string = "".join(bytes)
+    string = b"".join(chunks)
     
     if encoding:
-      string = string.decode(encoding)
+      string = string.decode(encoding, errors = errors)
     
     return string
 
-class BinaryFile(file, BinaryHelper):
-  pass
+class BinaryFile(BinaryHelper):
+  
+  def __init__(self, filename, mode):
+    self.fp = open(filename, mode)
+  
+  def __getattr__(self, attr):
+    return getattr(self.fp, attr)
+  
+  def close(self):
+    self.fp.close()
+  
+  def __enter__(self):
+    return self
+  
+  def __exit__(self, exc_type, exc_val, exc_tb):
+    self.close()
 
-class BinaryString(StringIO.StringIO, BinaryHelper):
+class BinaryString(io.BytesIO, BinaryHelper):
   pass
 
 def to_u32(b):
@@ -140,7 +156,7 @@ def zlib_inflate(data):
   return inflated
 
 def reverse_enum(L):
-  for index in reversed(xrange(len(L))):
+  for index in reversed(range(len(L))):
     yield index, L[index]
 
 ### EOF ###

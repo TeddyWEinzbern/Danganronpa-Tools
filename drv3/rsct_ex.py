@@ -9,8 +9,10 @@
 ################################################################################
 
 from util import *
+from logutil import get_logger
 
-RSCT_MAGIC = "RSCT"
+RSCT_MAGIC = b"RSCT"
+logger = get_logger(__name__)
 
 def rsct_ex(filename, out_file = None):
   out_file = out_file or os.path.splitext(filename)[0] + ".txt"
@@ -24,14 +26,12 @@ def rsct_ex(filename, out_file = None):
   
   out_dir = os.path.dirname(out_file)
   
-  try:
-    os.makedirs(out_dir)
-  except:
-    pass
+  if out_dir:
+    os.makedirs(out_dir, exist_ok = True)
   
-  with open(out_file, "wb") as f:
+  with open(out_file, "w", encoding = "UTF-8", newline = "\n") as f:
     for i, string in enumerate(strs):
-      f.write(string.encode("UTF-8"))
+      f.write(string)
       f.write("\n\n")
 
 def rsct_ex_data(f):
@@ -80,12 +80,10 @@ if __name__ == "__main__":
       out_dir  = dirname + "-ex" + out_dir[len(dirname):]
       out_file = os.path.join(out_dir, os.path.splitext(basename)[0] + ".txt")
       
-      try:
-        os.makedirs(out_dir)
-      except:
-        pass
+      if out_dir:
+        os.makedirs(out_dir, exist_ok = True)
       
-      print fn
+      logger.info(fn)
       rsct_ex(fn, out_file)
 
 ### EOF ###
